@@ -55,7 +55,7 @@ def get_word():
     elif demand == 'extra':
         meaning = Meaning.query.filter_by(id=word.meaning_id).first()
         image = Image.query.filter_by(id=word.image_id).first()
-        image_pil = PIL.Image.open(to_path('static/images/' + image.image))
+        image_pil = PIL.Image.open(to_path('backend/static/images/' + image.image))
         similarity = oracle_detector.predictTopN(image_pil, 3)
         similarity = [i[0] for i in similarity if i[0] != need_word][:2]
         similar_images = [Image.query.filter_by(id=Word.query.filter_by(word=i).first().id).first().image for i in
@@ -107,12 +107,12 @@ def get_idiom_test():
                  Word.query.filter_by(id=idiom.word_id_2).first(),
                  Word.query.filter_by(id=idiom.word_id_3).first(),
                  Word.query.filter_by(id=idiom.word_id_4).first()]
-        image_paths = [to_path('static/images/' + Image.query.filter_by(id=words[i].image_id).first().image for i in range(4))]
+        image_paths = [to_path('backend/static/images/' + Image.query.filter_by(id=words[i].image_id).first().image) for i in range(4)]
         image = getIdiomImage(image_paths)
         name = renameWithHash(image)
-        files = os.scandir('static/temp')
+        files = os.scandir('backend/static/temp')
         if name not in [file.name for file in files]:
-            image.save('static/temp/' + name)
+            image.save('backend/static/temp/' + name)
         idiom_paths.append(url_for('temp/' + name))
     return jsonify([{idioms[i].idiom: idiom_paths[i]} for i in range(10)])
 
@@ -127,12 +127,12 @@ def get_idiom():
              Word.query.filter_by(id=idiom_db.word_id_2).first(),
              Word.query.filter_by(id=idiom_db.word_id_3).first(),
              Word.query.filter_by(id=idiom_db.word_id_4).first()]
-    image_paths = [to_path('static/images/' + Image.query.filter_by(id=words[i].image_id).first().image for i in range(4))]
+    image_paths = [to_path('backend/static/images/' + Image.query.filter_by(id=words[i].image_id).first().image) for i in range(4)]
     image = getIdiomImage(image_paths)
     name = renameWithHash(image)
-    files = os.scandir('static/temp')
+    files = os.scandir('backend/static/temp')
     if name not in [file.name for file in files]:
-        image.save('static/temp/' + name)
+        image.save('backend/static/temp/' + name)
     return jsonify(url_for('temp/' + name))
 
 
@@ -230,13 +230,13 @@ def translate_2_oracle():
         word = Word.query.filter_by(word=c).first()
         if word is None:
             continue
-        image_path = to_path('static/images/' + Image.query.filter_by(id=word.image_id).first().image)
+        image_path = to_path('backend/static/images/' + Image.query.filter_by(id=word.image_id).first().image)
         sentence_paths.append(image_path)
     image = getSentenceImage(sentence_paths)
     name = renameWithHash(image)
-    files = os.scandir('static/temp')
+    files = os.scandir('backend/static/temp')
     if name not in [file.name for file in files]:
-        image.save('static/temp/' + name)
+        image.save('backend/static/temp/' + name)
     return url_for('temp/' + name)
 
 
@@ -256,7 +256,7 @@ def card_customization():
     if card_pil is None:
         return make_response('word error', 400)
     name = renameWithHash(card_pil)
-    card_pil.save('static/temp/' + name)
+    card_pil.save('backend/static/temp/' + name)
     return url_for('temp/' + name)
 
 
@@ -275,8 +275,8 @@ def rubbing_translate():
         word_pil = rubbing_pil.crop((left, top, right, bottom))
         sentence += oracle_detector.predictTopN(word_pil, 1)[0][0]
     name = renameWithHash(rubbing_pil)
-    if name not in [file.name for file in os.scandir('static/temp')]:
-        rubbing_pil.save('static/temp/' + name)
+    if name not in [file.name for file in os.scandir('backend/static/temp')]:
+        rubbing_pil.save('backend/static/temp/' + name)
     return jsonify({'sentence': sentence, 'image': url_for('temp/' + name)})
 
 

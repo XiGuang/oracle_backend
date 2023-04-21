@@ -71,7 +71,7 @@ def getCardImage(card_cv, words):
         word_db = Word.query.filter_by(word=word['word']).first()
         if word_db is None:
             return None
-        word_pil = Image.open("static\\images\\" + ImageDB.query.filter_by(id=word_db.image_id).first().image)
+        word_pil = Image.open("backend/static/images/" + ImageDB.query.filter_by(id=word_db.image_id).first().image)
         word_pil = word_pil.convert("RGBA")
         word_pil = word_pil.resize((120, 120))
         data = word_pil.load()
