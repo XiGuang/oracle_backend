@@ -7,7 +7,7 @@ import PIL.Image
 import numpy as np
 from flask import Blueprint, request, jsonify, make_response
 
-from backend.functions import getIdiomImage, renameWithHash, getSentenceImage, url_for, getCardImage, cv2PIL
+from backend.functions import getIdiomImage, renameWithHash, getSentenceImage, url_for, getCardImage, cv2PIL, to_path
 from backend.modules import Meaning, Image, Word, OrdinaryTest, Idiom, Vocabulary
 from backend.detectors.oracle_detector import OracleDetector
 from backend.detectors.rubbing_detector import RubbingDetector
@@ -55,7 +55,7 @@ def get_word():
     elif demand == 'extra':
         meaning = Meaning.query.filter_by(id=word.meaning_id).first()
         image = Image.query.filter_by(id=word.image_id).first()
-        image_pil = PIL.Image.open('static/images/' + image.image)
+        image_pil = PIL.Image.open(to_path('static/images/' + image.image))
         similarity = oracle_detector.predictTopN(image_pil, 3)
         similarity = [i[0] for i in similarity if i[0] != need_word][:2]
         similar_images = [Image.query.filter_by(id=Word.query.filter_by(word=i).first().id).first().image for i in
@@ -107,7 +107,7 @@ def get_idiom_test():
                  Word.query.filter_by(id=idiom.word_id_2).first(),
                  Word.query.filter_by(id=idiom.word_id_3).first(),
                  Word.query.filter_by(id=idiom.word_id_4).first()]
-        image_paths = ['static\\images\\' + Image.query.filter_by(id=words[i].image_id).first().image for i in range(4)]
+        image_paths = [to_path('static/images/' + Image.query.filter_by(id=words[i].image_id).first().image for i in range(4))]
         image = getIdiomImage(image_paths)
         name = renameWithHash(image)
         files = os.scandir('static/temp')
@@ -127,7 +127,7 @@ def get_idiom():
              Word.query.filter_by(id=idiom_db.word_id_2).first(),
              Word.query.filter_by(id=idiom_db.word_id_3).first(),
              Word.query.filter_by(id=idiom_db.word_id_4).first()]
-    image_paths = ['static\\images\\' + Image.query.filter_by(id=words[i].image_id).first().image for i in range(4)]
+    image_paths = [to_path('static/images/' + Image.query.filter_by(id=words[i].image_id).first().image for i in range(4))]
     image = getIdiomImage(image_paths)
     name = renameWithHash(image)
     files = os.scandir('static/temp')
@@ -230,7 +230,7 @@ def translate_2_oracle():
         word = Word.query.filter_by(word=c).first()
         if word is None:
             continue
-        image_path = 'static\\images\\' + Image.query.filter_by(id=word.image_id).first().image
+        image_path = to_path('static/images/' + Image.query.filter_by(id=word.image_id).first().image)
         sentence_paths.append(image_path)
     image = getSentenceImage(sentence_paths)
     name = renameWithHash(image)

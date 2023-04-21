@@ -22,6 +22,10 @@ def url_for(path):
     return config.server_path + 'static/' + path
 
 
+def to_path(path):
+    return path.replace('\\', '/')
+
+
 def renameWithHash(image):
     hash_value = imagehash.crop_resistant_hash(image)
     new_name = str(hash_value) + ".png"
