@@ -260,7 +260,7 @@ def card_customization():
     return url_for('temp/' + name)
 
 
-@main.route('/api/rubbing_translate', methods=['GET'])
+@main.route('/api/rubbing_translate', methods=['GET','POST'])
 def rubbing_translate():
     rubbing = request.files.get("image")
     if rubbing is None:
@@ -280,7 +280,7 @@ def rubbing_translate():
     return jsonify({'sentence': sentence, 'image': url_for('temp/' + name)})
 
 
-@main.route('/api/handwriting_judge', methods=['GET'])
+@main.route('/api/handwriting_judge', methods=['GET','POST'])
 def handwriting_judge():
     handwriting = request.files.get('image')
     if handwriting is None:
@@ -297,7 +297,7 @@ def handwriting_judge():
     return make_response('0', 200)
 
 
-@main.route('/api/word_detect', methods=['GET'])
+@main.route('/api/word_detect', methods=['GET','POST'])
 def word_detect():
     word_image = request.files.get("image")
     if word_image is None:
