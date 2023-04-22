@@ -26,8 +26,8 @@ def index():
 # 得到请求甲骨文的含义或者图片
 @main.route('/api/word', methods=['GET'])
 def get_word():
-    need_word = request.form['word']
-    demand = request.form['demand']
+    need_word = request.args.get('word')
+    demand = request.args.get('demand')
 
     word = Word.query.filter_by(word=need_word).first()
     if not word:
@@ -85,7 +85,7 @@ def get_ordinary_test():
 
 @main.route('/api/test_by_id', methods=['GET'])
 def get_test_by_id():
-    id = int(request.form['id'])
+    id = int(request.args.get('id'))
     test = OrdinaryTest.query.filter_by(id=id).first()
     return jsonify([test.id, test.question, test.A, test.B, test.C, test.D, test.answer, test.answer_explanation])
 
@@ -93,7 +93,7 @@ def get_test_by_id():
 # return [{idioms, image}, {idioms, image}, ...]
 @main.route('/api/idiom_test', methods=['GET'])
 def get_idiom_test():
-    number = int(request.form['number'])
+    number = int(request.args.get('number'))
     length = Idiom.query.count()
     idiom_ids = []
     while len(idiom_ids) < number:
@@ -119,7 +119,7 @@ def get_idiom_test():
 
 @main.route('/api/idiom', methods=['GET'])
 def get_idiom():
-    idiom = request.form['idiom']
+    idiom = request.args.get('idiom')
     idiom_db = Idiom.query.filter_by(idiom=idiom).first()
     if not idiom_db:
         return make_response('Idiom not found', 400)
@@ -139,7 +139,7 @@ def get_idiom():
 # return: [{vocabulary, [bool,bool,bool,bool],[image_path,image_path,image_path,image_path]},...]
 @main.route('/api/vocabulary_test', methods=['GET'])
 def get_vocabulary_test():
-    number = int(request.form['number'])
+    number = int(request.args.get('number'))
     length = Vocabulary.query.count()
     vocabulary_ids = []
     while len(vocabulary_ids) < number:
@@ -173,7 +173,7 @@ def get_vocabulary_test():
 
 @main.route('/api/vocabulary', methods=['GET'])
 def get_vocabulary():
-    vocabulary = request.form['vocabulary']
+    vocabulary = request.args.get('vocabulary')
     vocabulary_db = Vocabulary.query.filter_by(vocabulary=vocabulary).first()
     if not vocabulary_db:
         return make_response('Vocabulary not found', 400)
