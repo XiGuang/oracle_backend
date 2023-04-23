@@ -94,6 +94,8 @@ def get_test_by_id():
 @main.route('/api/idiom_test', methods=['GET'])
 def get_idiom_test():
     number = int(request.args.get('number'))
+    if number > 30:
+        return make_response('Too many idioms', 400)
     length = Idiom.query.count()
     idiom_ids = []
     while len(idiom_ids) < number:
@@ -114,7 +116,7 @@ def get_idiom_test():
         if name not in [file.name for file in files]:
             image.save('backend/static/temp/' + name)
         idiom_paths.append(url_for('temp/' + name))
-    return jsonify([{idioms[i].idiom: idiom_paths[i]} for i in range(10)])
+    return jsonify([{idioms[i].idiom: idiom_paths[i]} for i in range(number)])
 
 
 @main.route('/api/idiom', methods=['GET'])
@@ -140,6 +142,8 @@ def get_idiom():
 @main.route('/api/vocabulary_test', methods=['GET'])
 def get_vocabulary_test():
     number = int(request.args.get('number'))
+    if number > 30:
+        return make_response('Too many vocabularies', 400)
     length = Vocabulary.query.count()
     vocabulary_ids = []
     while len(vocabulary_ids) < number:
