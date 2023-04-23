@@ -54,8 +54,8 @@ class RubbingDetector:
         pred, or_img = self.inference(image)
         # top, left, right, bottom, score, class
         outbox = self.filter_box(pred, thresh, 0.5)
+        outbox = sorted(outbox, key=lambda x: x[1], reverse=False)
         outbox = sorted(outbox, key=lambda x: x[0], reverse=True)
-        outbox = sorted(outbox, key=lambda x: x[1], reverse=True)
         outbox = np.array(outbox)
         if len(outbox) > 0:
             self.draw(or_img, outbox)

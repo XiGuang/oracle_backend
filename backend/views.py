@@ -109,7 +109,8 @@ def get_idiom_test():
                  Word.query.filter_by(id=idiom.word_id_2).first(),
                  Word.query.filter_by(id=idiom.word_id_3).first(),
                  Word.query.filter_by(id=idiom.word_id_4).first()]
-        image_paths = [to_path('backend/static/images/' + Image.query.filter_by(id=words[i].image_id).first().image) for i in range(4)]
+        image_paths = [to_path('backend/static/images/' + Image.query.filter_by(id=words[i].image_id).first().image) for
+                       i in range(4)]
         image = getIdiomImage(image_paths)
         name = renameWithHash(image)
         files = os.scandir('backend/static/temp')
@@ -129,7 +130,8 @@ def get_idiom():
              Word.query.filter_by(id=idiom_db.word_id_2).first(),
              Word.query.filter_by(id=idiom_db.word_id_3).first(),
              Word.query.filter_by(id=idiom_db.word_id_4).first()]
-    image_paths = [to_path('backend/static/images/' + Image.query.filter_by(id=words[i].image_id).first().image) for i in range(4)]
+    image_paths = [to_path('backend/static/images/' + Image.query.filter_by(id=words[i].image_id).first().image) for i
+                   in range(4)]
     image = getIdiomImage(image_paths)
     name = renameWithHash(image)
     files = os.scandir('backend/static/temp')
@@ -266,7 +268,7 @@ def card_customization():
     return url_for('temp/' + name)
 
 
-@main.route('/api/rubbing_translate', methods=['GET','POST'])
+@main.route('/api/rubbing_translate', methods=['GET', 'POST'])
 def rubbing_translate():
     rubbing = request.files.get("image")
     if rubbing is None:
@@ -279,6 +281,7 @@ def rubbing_translate():
     for word in words:
         top, left, bottom, right, _, _ = word
         word_pil = rubbing_pil.crop((left, top, right, bottom))
+        word_pil = word_pil.point(lambda x: 255 - x)
         sentence += oracle_detector.predictTopN(word_pil, 1)[0][0]
     name = renameWithHash(rubbing_pil)
     if name not in [file.name for file in os.scandir('backend/static/temp')]:
@@ -286,7 +289,7 @@ def rubbing_translate():
     return jsonify({'sentence': sentence, 'image': url_for('temp/' + name)})
 
 
-@main.route('/api/handwriting_judge', methods=['GET','POST'])
+@main.route('/api/handwriting_judge', methods=['GET', 'POST'])
 def handwriting_judge():
     handwriting = request.files.get('image')
     if handwriting is None:
@@ -303,7 +306,7 @@ def handwriting_judge():
     return make_response('0', 200)
 
 
-@main.route('/api/word_detect', methods=['GET','POST'])
+@main.route('/api/word_detect', methods=['GET', 'POST'])
 def word_detect():
     word_image = request.files.get("image")
     if word_image is None:
