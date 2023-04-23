@@ -236,6 +236,8 @@ def translate_2_oracle():
             continue
         image_path = to_path('backend/static/images/' + Image.query.filter_by(id=word.image_id).first().image)
         sentence_paths.append(image_path)
+    if len(sentence_paths) == 0:
+        return make_response('No image found', 400)
     image = getSentenceImage(sentence_paths)
     name = renameWithHash(image)
     files = os.scandir('backend/static/temp')
