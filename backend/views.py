@@ -12,11 +12,13 @@ from backend.functions import getIdiomImage, renameWithHash, getSentenceImage, u
 from backend.modules import Meaning, Image, Word, OrdinaryTest, Idiom, Vocabulary, Essay
 from backend.detectors.oracle_detector import OracleDetector
 from backend.detectors.rubbing_detector import RubbingDetector
+from backend.detectors.bone_detector import BoneDetector
 
 main = Blueprint('main', __name__)
 
 oracle_detector = OracleDetector('backend/models/oracle.onnx', 'backend/detectors/oracle_dict.pkl')
 rubbing_detector = RubbingDetector('backend/models/best_rubbing.onnx')
+bone_detector = BoneDetector('backend/data/oracle_bone.xlsx')
 
 
 @main.route('/')
@@ -376,6 +378,15 @@ def get_essay():
     if essay is None:
         return make_response('essay not found', 400)
     return jsonify({'title': essay.title, 'author': essay.author, 'content': essay.content})
+
+
+@main.route('/api/bone_detect', methods=['GET'])
+def bone_detect():
+    sentence = request.args.get('sentence')
+    if sentence is None:
+        return make_response('sentence is None', 400)
+    result_class, similarity = bone_detector.predict(sentence)
+    return jsonify({'class': result_class, 'similarity': similarity})
 
 
 @main.errorhandler(404)
