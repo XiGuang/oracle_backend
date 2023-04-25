@@ -292,6 +292,8 @@ def card_customization():
     words = request.form['words']
     if words is None:
         return make_response('words is None', 400)
+    with open('1.txt', 'w') as f:
+        f.write(words)
     words = json.loads(words)
     card_pil = getCardImage(card_cv, words)
     if card_pil is None:
