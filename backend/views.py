@@ -289,12 +289,10 @@ def card_customization():
     card_cv = cv2.imdecode(card_data, cv2.IMREAD_COLOR)
     if card_cv.shape != (600, 800, 3):
         card_cv = cv2.resize(card_cv, (600, 800))
-    words = request.form['words']
+    words = request.form.get('words')
     if words is None:
         return make_response('words is None', 400)
-    with open('1.txt', 'w') as f:
-        f.write(words)
-    words = json.loads(words)
+    words=json.loads(words)
     card_pil = getCardImage(card_cv, words)
     if card_pil is None:
         return make_response('word error', 400)
