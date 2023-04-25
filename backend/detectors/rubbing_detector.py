@@ -191,11 +191,9 @@ class RubbingDetector:
     def draw(self, image, box_data):
         boxes = box_data[..., :4].astype(np.int32)
 
-        for i, box in enumerate(boxes):
+        for box in boxes:
             left, top, right, bottom = box
-
             cv2.rectangle(image, (left, top), (right, bottom), (255, 0, 0), 2)
-            cv2.putText(image, str(i), (left, top), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
 
 if __name__ == "__main__":
