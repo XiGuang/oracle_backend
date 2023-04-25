@@ -1,6 +1,9 @@
+from functools import reduce
+
 import cv2
 import numpy as np
 import onnxruntime
+from sklearn.cluster import DBSCAN
 
 
 class RubbingDetector:
@@ -52,15 +55,45 @@ class RubbingDetector:
 
     def process(self, image, thresh):
         pred, or_img = self.inference(image)
-        # top, left, right, bottom, score, class
+        # left, top, right, bottom, score, class
         outbox = self.filter_box(pred, thresh, 0.5)
-        outbox = sorted(outbox, key=lambda x: x[1], reverse=False)
-        outbox = sorted(outbox, key=lambda x: x[0], reverse=True)
+        outbox = self.sorted_boxes(outbox)
         outbox = np.array(outbox)
         if len(outbox) > 0:
             self.draw(or_img, outbox)
 
         return or_img, outbox
+
+    def sorted_boxes(self, boxes):
+        length_side = np.average([x2 - x1 for x1, y1, x2, y2, _, _ in boxes])
+        sorted_y = sorted(boxes, key=lambda x: x[1])
+        groups = []
+        while len(sorted_y) > 0:
+            group = []
+            group.append(sorted_y[0])
+            sorted_y.pop(0)
+            i = 0
+            while i < len(sorted_y):
+                center_now = (sorted_y[i][0] + sorted_y[i][2]) / 2
+                center_last = (group[-1][0] + group[-1][2]) / 2
+                if abs(center_now - center_last) < length_side:
+                    group.append(sorted_y[i])
+                    sorted_y.pop(i)
+                else:
+                    i += 1
+            groups.append(group)
+        sorted_boxes = []
+
+        def get_center(x):
+            center = 0
+            for i in x:
+                center += i[0] + i[2]
+            return center / len(x) / 2
+
+        groups = sorted(groups, key=lambda x: get_center(x), reverse=True)
+        for group in groups:
+            sorted_boxes.extend(group)
+        return sorted_boxes
 
     # dets:  array [x,6] 6个值分别为x1,y1,x2,y2,score,class
     # thresh: 阈值
@@ -158,17 +191,17 @@ class RubbingDetector:
     def draw(self, image, box_data):
         boxes = box_data[..., :4].astype(np.int32)
 
-        for i,box in enumerate(boxes):
-            top, left, right, bottom = box
+        for i, box in enumerate(boxes):
+            left, top, right, bottom = box
 
-            cv2.rectangle(image, (top, left), (right, bottom), (255, 0, 0), 2)
-            cv2.putText(image, str(i), (top, left), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.rectangle(image, (left, top), (right, bottom), (255, 0, 0), 2)
+            cv2.putText(image, str(i), (left, top), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
 
 if __name__ == "__main__":
     onnx_path = '../models/best_rubbing.onnx'
     model = RubbingDetector(onnx_path)
-    image = cv2.imread('../../img_1.png')
+    image = cv2.imread('../../rubbing.png')
     image, outbox = model.process(image, 0.5)
     cv2.imwrite('res.jpg', image)
     print(outbox)

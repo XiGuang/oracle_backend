@@ -1,5 +1,6 @@
+import hashlib
+
 import cv2
-import imagehash
 
 import PIL.Image as Image
 import numpy as np
@@ -27,7 +28,8 @@ def to_path(path):
 
 
 def renameWithHash(image):
-    hash_value = imagehash.crop_resistant_hash(image)
+    image_arr=np.asarray(image)
+    hash_value = hashlib.md5(image_arr).hexdigest()
     new_name = str(hash_value) + ".png"
     return new_name
 
@@ -56,8 +58,8 @@ def getSentenceImage(paths):
     # 图片大小相同，将他们拼接成一张大图
     width, height = images[0].size
     col = len(images) // max_row + 1
-    result = Image.new(images[0].mode, (width * (len(images) if len(images) < max_row else max_row), height * col),
-                       color='white')
+    result = Image.new('RGBA', (width * (len(images) if len(images) < max_row else max_row), height * col),
+                       (0, 0, 0, 0))
     for i in range(len(images)):
         result.paste(images[i], (width * (i % max_row), height * (i // max_row)))
     return result
@@ -72,15 +74,11 @@ def getCardImage(card_cv, words):
         if word_db is None:
             return None
         word_pil = Image.open("backend/static/images/" + ImageDB.query.filter_by(id=word_db.image_id).first().image)
-        word_pil = word_pil.convert("RGBA")
         word_pil = word_pil.resize((120, 120))
-        data = word_pil.load()
-        for x in range(word_pil.size[0]):
-            for y in range(word_pil.size[1]):
-                if data[x, y] == (255, 255, 255, 255):
-                    data[x, y] = (255, 255, 255, 0)
-                else:
-                    data[x, y] = tuple(word['color']) + (255,)
+        width, height = word_pil.size
+        for i in range(width):
+            for j in range(height):
+                word_pil.putpixel((i,j),tuple(word['color']+[word_pil.getpixel((i,j))[-1],]))
         alpha = word_pil.split()[-1]
         card_pil.paste(word_pil, (int(word['position'][0] * w), int(word['position'][1] * h)), mask=alpha)
     return card_pil

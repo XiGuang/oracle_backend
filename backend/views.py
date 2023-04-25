@@ -4,11 +4,12 @@ import random
 
 import cv2
 import PIL.Image
+import PIL.ImageOps
 import numpy as np
 from flask import Blueprint, request, jsonify, make_response
 
 from backend.functions import getIdiomImage, renameWithHash, getSentenceImage, url_for, getCardImage, cv2PIL, to_path
-from backend.modules import Meaning, Image, Word, OrdinaryTest, Idiom, Vocabulary
+from backend.modules import Meaning, Image, Word, OrdinaryTest, Idiom, Vocabulary, Essay
 from backend.detectors.oracle_detector import OracleDetector
 from backend.detectors.rubbing_detector import RubbingDetector
 
@@ -69,6 +70,28 @@ def get_word():
             return make_response('Meaning or image not found', 400)
     else:
         return make_response('Invalid demand', 400)
+
+
+@main.route('/api/color_words', methods=['GET'])
+def get_color_words():
+    words = request.args.get('words')
+    color = request.args.get('color').split(',')
+    color = tuple([int(i) for i in color])
+    image_paths = []
+    for word in words:
+        word_db = Word.query.filter_by(word=word).first()
+        if word_db is None:
+            continue
+        image = Image.query.filter_by(id=word_db.image_id).first()
+        image_pil = PIL.Image.open(to_path('backend/static/images/' + image.image))
+        for i in range(image_pil.size[0]):
+            for j in range(image_pil.size[1]):
+                image_pil.putpixel((i, j), color + (image_pil.getpixel((i, j))[3],))
+        name = renameWithHash(image_pil)
+        if not os.path.exists(to_path('backend/static/temp/' + name)):
+            image_pil.save(to_path('backend/static/temp/' + name))
+        image_paths.append(url_for('temp/' + name))
+    return jsonify(image_paths)
 
 
 @main.route('/api/ordinary_test', methods=['GET'])
@@ -275,17 +298,18 @@ def rubbing_translate():
         return make_response('image is None', 400)
     rubbing_data = np.frombuffer(rubbing.read(), np.uint8)
     rubbing_cv = cv2.imdecode(rubbing_data, cv2.IMREAD_COLOR)
+    rubbing_pil = cv2PIL(rubbing_cv).resize((640, 640))
     image, words = rubbing_detector.process(rubbing_cv, 0.6)
-    rubbing_pil = cv2PIL(image)
+    res_image = cv2PIL(image)
     sentence = ''
     for word in words:
-        top, left, bottom, right, _, _ = word
+        left, top, right, bottom, _, _ = word
         word_pil = rubbing_pil.crop((left, top, right, bottom))
-        word_pil = word_pil.point(lambda x: 255 - x)
+        word_pil = PIL.ImageOps.invert(word_pil)
         sentence += oracle_detector.predictTopN(word_pil, 1)[0][0]
-    name = renameWithHash(rubbing_pil)
+    name = renameWithHash(res_image)
     if name not in [file.name for file in os.scandir('backend/static/temp')]:
-        rubbing_pil.save('backend/static/temp/' + name)
+        res_image.save('backend/static/temp/' + name)
     return jsonify({'sentence': sentence, 'image': url_for('temp/' + name)})
 
 
@@ -326,16 +350,24 @@ def word_detect():
     return jsonify(result)
 
 
-@main.route("/api/upload", methods=["POST", "GET"])
-def upload_image():
-    image = request.files.get("file")
-    print(image)
-    if image:
-        # 将图片保存到本地
-        image.save("image.png")
-        return "Image uploaded successfully."
-    else:
-        return "No image found in the request."
+@main.route('/api/essay_index', methods=['GET'])
+def get_essay_index():
+    essay = Essay.query.all()
+    result = []
+    for e in essay:
+        result.append({'title': e.title, 'id': e.id})
+    return jsonify(result)
+
+
+@main.route('/api/essay', methods=['GET'])
+def get_essay():
+    id = request.args.get('id')
+    if id is None:
+        return make_response('id is None', 400)
+    essay = Essay.query.filter_by(id=id).first()
+    if essay is None:
+        return make_response('essay not found', 400)
+    return jsonify({'title': essay.title, 'author': essay.author, 'content': essay.content})
 
 
 @main.errorhandler(404)

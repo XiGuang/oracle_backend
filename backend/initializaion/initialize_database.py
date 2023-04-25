@@ -1,9 +1,12 @@
+import os
+
 import numpy as np
 import json
+import pandas as pd
 
 from backend import app
-from backend.app import db
-from models import Meaning, Image, Word, OrdinaryTest, Idiom, Vocabulary
+from backend import db
+from backend.modules import Meaning, Image, Word, OrdinaryTest, Idiom, Vocabulary, Essay
 
 
 def create_tables():
@@ -13,11 +16,12 @@ def create_tables():
     create_test_table()
     create_idiom_table()
     create_vocabulary_table()
+    create_essay_table()
     print('All tables created successfully')
 
 
 def create_word_table():
-    words = json.load(open('data/final_word.json', 'r', encoding='utf-8'))
+    words = json.load(open('backend/data/final_word.json', 'r', encoding='utf-8'))
     for word in words:
         meaning = Meaning(meaning=word['explanation'])
         db.session.add(meaning)
@@ -33,8 +37,13 @@ def create_word_table():
 
 
 def create_test_table():
-    tests = np.loadtxt('data/test1.csv', dtype=str, delimiter=',', encoding='utf-8-sig', skiprows=1)
-    for test in tests:
+    tests = pd.read_excel('backend/data/test1解析版.xlsx', header=0)
+    for index, test in tests.iterrows():
+        if pd.isnull(test.get('A')):
+            continue
+        for i in range(0, 6):
+            if pd.isnull(test[i]):
+                test[i] = ''
         test = OrdinaryTest(question=test[0], A=test[1], B=test[2], C=test[3], D=test[4], answer=test[5],
                             answer_explanation=test[6])
         db.session.add(test)
@@ -43,7 +52,7 @@ def create_test_table():
 
 
 def create_idiom_table():
-    idioms = np.loadtxt('data/idiom_valid.csv', dtype=str, delimiter=',', encoding='utf-8-sig', skiprows=1)
+    idioms = np.loadtxt('backend/data/idiom_valid.csv', dtype=str, delimiter=',', encoding='utf-8-sig', skiprows=1)
     for idiom in idioms:
         word_ids = [Word.query.filter_by(word=word).first().id for word in idiom]
         idiom_db = Idiom(idiom=idiom, word_id_1=word_ids[0], word_id_2=word_ids[1], word_id_3=word_ids[2],
@@ -54,7 +63,7 @@ def create_idiom_table():
 
 
 def create_vocabulary_table():
-    vocabularies = np.loadtxt('data/ci_valid.csv', dtype=str, delimiter=',', encoding='utf-8-sig', skiprows=1)
+    vocabularies = np.loadtxt('backend/data/ci_valid.csv', dtype=str, delimiter=',', encoding='utf-8-sig', skiprows=1)
     for vocabulary in vocabularies:
         word_ids = [Word.query.filter_by(word=word).first().id for word in vocabulary]
         vocabulary_db = Vocabulary(vocabulary=vocabulary, word_id_1=word_ids[0], word_id_2=word_ids[1])
@@ -62,6 +71,26 @@ def create_vocabulary_table():
         db.session.commit()
     print('Vocabulary table created successfully')
 
+
+def create_essay_table():
+    files = os.listdir('backend/data/Essay')
+    for file in files:
+        with open('backend/data/Essay/' + file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            name = lines[0].strip()[3:]
+            author = lines[1].strip()[3:]
+            content = ''
+            for i in range(2, len(lines)):
+                if lines[i].strip() == '' or lines[i].strip() == ' ':
+                    continue
+                else:
+                    content += lines[i].strip().strip('\\') + '\n'
+        essay = Essay(title=name, author=author, content=content)
+        db.session.add(essay)
+        db.session.commit()
+    print('Essay table created successfully')
+
+
 if __name__ == '__main__':
-    with app.app.app_context():
+    with app.app_context():
         create_tables()

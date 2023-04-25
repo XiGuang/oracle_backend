@@ -69,3 +69,14 @@ class Vocabulary(db.Model):
 
     def __repr__(self):
         return '<vocabulary %r>' % self.vocabulary
+
+
+class Essay(db.Model):
+    __tablename__ = 'essay'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(100), nullable=False)
+    author = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+
+    def __repr__(self):
+        return '<essay %r>' % self.title
