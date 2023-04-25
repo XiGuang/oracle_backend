@@ -82,10 +82,12 @@ def get_color_words():
     if len(color) != 3:
         return make_response('Invalid color', 400)
     image_paths = []
+    result_words = ''
     for word in words:
         word_db = Word.query.filter_by(word=word).first()
         if word_db is None:
             continue
+        result_words += word
         image = Image.query.filter_by(id=word_db.image_id).first()
         image_pil = PIL.Image.open(to_path('backend/static/images/' + image.image))
         for i in range(image_pil.size[0]):
@@ -95,7 +97,7 @@ def get_color_words():
         if not os.path.exists(to_path('backend/static/temp/' + name)):
             image_pil.save(to_path('backend/static/temp/' + name))
         image_paths.append(url_for('temp/' + name))
-    return jsonify(image_paths)
+    return jsonify(image_paths, result_words)
 
 
 @main.route('/api/ordinary_test', methods=['GET'])
