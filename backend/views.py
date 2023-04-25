@@ -75,8 +75,12 @@ def get_word():
 @main.route('/api/color_words', methods=['GET'])
 def get_color_words():
     words = request.args.get('words')
+    if words is None:
+        return make_response('Invalid words', 400)
     color = request.args.get('color').split(',')
     color = tuple([int(i) for i in color])
+    if len(color) != 3:
+        return make_response('Invalid color', 400)
     image_paths = []
     for word in words:
         word_db = Word.query.filter_by(word=word).first()
@@ -282,6 +286,8 @@ def card_customization():
     if card_cv.shape != (600, 800, 3):
         card_cv = cv2.resize(card_cv, (600, 800))
     words = request.form['words']
+    if words is None:
+        return make_response('words is None', 400)
     words = json.loads(words)
     card_pil = getCardImage(card_cv, words)
     if card_pil is None:
