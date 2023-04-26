@@ -90,6 +90,17 @@ def create_essay_table():
         db.session.commit()
     print('Essay table created successfully')
 
+def modify_word_table():
+    words = pd.read_excel('backend/data/甲骨文字2.xlsx', header=None)
+    for index, word in words.iterrows():
+        word_db = Word.query.filter_by(word=word[0]).first()
+        if word_db is None:
+            continue
+        meaning = Meaning.query.filter_by(id=word_db.meaning_id).first()
+        meaning.meaning = word[1]
+        db.session.commit()
+    print('Word table modified successfully')
+
 
 if __name__ == '__main__':
     with app.app_context():
