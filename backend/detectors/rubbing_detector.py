@@ -9,19 +9,19 @@ from sklearn.cluster import DBSCAN
 class RubbingDetector:
     def __init__(self, onnx_path):
         self.onnx_session = onnxruntime.InferenceSession(onnx_path)
-        self.input_name = self.get_input_name()
-        self.output_name = self.get_output_name()
+        self.input_name = self._get_input_name()
+        self.output_name = self._get_output_name()
 
     # -------------------------------------------------------
     #   获取输入输出的名字
     # -------------------------------------------------------
-    def get_input_name(self):
+    def _get_input_name(self):
         input_name = []
         for node in self.onnx_session.get_inputs():
             input_name.append(node.name)
         return input_name
 
-    def get_output_name(self):
+    def _get_output_name(self):
         output_name = []
         for node in self.onnx_session.get_outputs():
             output_name.append(node.name)
@@ -30,7 +30,7 @@ class RubbingDetector:
     # -------------------------------------------------------
     #   输入图像
     # -------------------------------------------------------
-    def get_input_feed(self, img_tensor):
+    def _get_input_feed(self, img_tensor):
         input_feed = {}
         for name in self.input_name:
             input_feed[name] = img_tensor
@@ -43,28 +43,28 @@ class RubbingDetector:
     #	4.图像增加维度
     #	5.onnx_session 推理
     # -------------------------------------------------------
-    def inference(self, image):
+    def _inference(self, image):
         or_img = cv2.resize(image, (640, 640))
         img = or_img[:, :, ::-1].transpose(2, 0, 1)  # BGR2RGB和HWC2CHW
         img = img.astype(dtype=np.float32)
         img /= 255.0
         img = np.expand_dims(img, axis=0)
-        input_feed = self.get_input_feed(img)
+        input_feed = self._get_input_feed(img)
         pred = self.onnx_session.run(None, input_feed)[0]
         return pred, or_img
 
     def process(self, image, thresh):
-        pred, or_img = self.inference(image)
+        pred, or_img = self._inference(image)
         # left, top, right, bottom, score, class
-        outbox = self.filter_box(pred, thresh, 0.5)
-        outbox = self.sorted_boxes(outbox)
+        outbox = self._filter_box(pred, thresh, 0.5)
+        outbox = self._sorted_boxes(outbox)
         outbox = np.array(outbox)
         if len(outbox) > 0:
-            self.draw(or_img, outbox)
+            self._draw(or_img, outbox)
 
         return or_img, outbox
 
-    def sorted_boxes(self, boxes):
+    def _sorted_boxes(self, boxes):
         length_side = np.average([x2 - x1 for x1, y1, x2, y2, _, _ in boxes])
         sorted_y = sorted(boxes, key=lambda x: x[1])
         groups = []
@@ -84,20 +84,20 @@ class RubbingDetector:
             groups.append(group)
         sorted_boxes = []
 
-        def get_center(x):
+        def _get_center(x):
             center = 0
             for i in x:
                 center += i[0] + i[2]
             return center / len(x) / 2
 
-        groups = sorted(groups, key=lambda x: get_center(x), reverse=True)
+        groups = sorted(groups, key=lambda x: _get_center(x), reverse=True)
         for group in groups:
             sorted_boxes.extend(group)
         return sorted_boxes
 
     # dets:  array [x,6] 6个值分别为x1,y1,x2,y2,score,class
     # thresh: 阈值
-    def nms(self, dets, thresh):
+    def _nms(self, dets, thresh):
         x1 = dets[:, 0]
         y1 = dets[:, 1]
         x2 = dets[:, 2]
@@ -137,7 +137,7 @@ class RubbingDetector:
             index = index[idx + 1]
         return keep
 
-    def xywh2xyxy(self, x):
+    def _xywh2xyxy(self, x):
         # [x, y, w, h] to [x1, y1, x2, y2]
         y = np.copy(x)
         y[:, 0] = x[:, 0] - x[:, 2] / 2
@@ -146,7 +146,7 @@ class RubbingDetector:
         y[:, 3] = x[:, 1] + x[:, 3] / 2
         return y
 
-    def filter_box(self, org_box, conf_thres, iou_thres):  # 过滤掉无用的框
+    def _filter_box(self, org_box, conf_thres, iou_thres):  # 过滤掉无用的框
         # -------------------------------------------------------
         #   删除为1的维度
         #	删除置信度小于conf_thres的BOX
@@ -181,14 +181,14 @@ class RubbingDetector:
                     curr_cls_box.append(box[j][:6])
             curr_cls_box = np.array(curr_cls_box)
             # curr_cls_box_old = np.copy(curr_cls_box)
-            curr_cls_box = self.xywh2xyxy(curr_cls_box)
-            curr_out_box = self.nms(curr_cls_box, iou_thres)
+            curr_cls_box = self._xywh2xyxy(curr_cls_box)
+            curr_out_box = self._nms(curr_cls_box, iou_thres)
             for k in curr_out_box:
                 output.append(curr_cls_box[k])
         output = np.array(output)
         return output
 
-    def draw(self, image, box_data):
+    def _draw(self, image, box_data):
         boxes = box_data[..., :4].astype(np.int32)
 
         for box in boxes:

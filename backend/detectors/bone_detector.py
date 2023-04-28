@@ -88,9 +88,9 @@ class BoneDetector:
         val_pred = clf.predict([target_idf])
         result = list(self.class_dic.keys())[list(self.class_dic.values()).index(val_pred)]
         self.doc_list.pop()
-        return result, self.get_similar_bones(val_pred)
+        return result, self._get_similar_bones(val_pred)
 
-    def get_similar_bones(self, id):
+    def _get_similar_bones(self, id):
         similarity = []
         all_similarity = []
         for i in range(len(self.class_list)):

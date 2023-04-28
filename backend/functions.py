@@ -72,7 +72,7 @@ def getCardImage(card_cv, words):
     for word in words:
         word_db = Word.query.filter_by(word=word['word']).first()
         if word_db is None:
-            return None
+            continue
         word_pil = Image.open(to_path("backend/static/images/" + ImageDB.query.filter_by(id=word_db.image_id).first().image))
         word_pil = word_pil.resize((120, 120))
         width, height = word_pil.size
