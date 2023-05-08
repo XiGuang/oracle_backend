@@ -7,6 +7,7 @@ import PIL.Image
 import PIL.ImageOps
 import numpy as np
 from flask import Blueprint, request, jsonify, make_response
+from flask import render_template
 
 from backend.functions import getIdiomImage, renameWithHash, getSentenceImage, url_for, getCardImage, cv2PIL, to_path
 from backend.modules import Meaning, Image, Word, OrdinaryTest, Idiom, Vocabulary, Essay
@@ -23,7 +24,7 @@ bone_detector = BoneDetector('backend/data/oracle_bone.xlsx')
 
 @main.route('/')
 def index():
-    return 'hello world'
+    return render_template('hello.html')
 
 
 # 得到请求甲骨文的含义或者图片
