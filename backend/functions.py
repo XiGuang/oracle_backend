@@ -17,6 +17,12 @@ def cv2PIL(img_cv):
 def PIL2cv(img_pil):
     return cv2.cvtColor(np.asarray(img_pil), cv2.COLOR_RGB2BGR)
 
+def setBackgroundColor(img, color=None):
+    new_img=img.copy()
+    if color is None:
+        color = [255, 255, 255]
+    new_img[np.where((new_img[:, :, 3] == 0))] = [*color,255]
+    return new_img
 
 def url_for(path):
     path = path.replace('\\', '/')

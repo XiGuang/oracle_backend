@@ -9,7 +9,8 @@ import numpy as np
 from flask import Blueprint, request, jsonify, make_response
 from flask import render_template
 
-from backend.functions import getIdiomImage, renameWithHash, getSentenceImage, url_for, getCardImage, cv2PIL, to_path
+from backend.functions import getIdiomImage, renameWithHash, getSentenceImage, url_for, getCardImage, cv2PIL, to_path, \
+    setBackgroundColor
 from backend.modules import Meaning, Image, Word, OrdinaryTest, Idiom, Vocabulary, Essay
 from backend.detectors.oracle_detector import OracleDetector
 from backend.detectors.rubbing_detector import RubbingDetector
@@ -330,8 +331,9 @@ def handwriting_judge():
     if handwriting is None:
         return make_response('image is None', 400)
     handwriting_data = np.frombuffer(handwriting.read(), np.int8)
-    handwriting_cv = cv2.imdecode(handwriting_data, cv2.IMREAD_COLOR)
-    handwriting_pil = cv2PIL(handwriting_cv)
+    handwriting_cv = cv2.imdecode(handwriting_data, cv2.IMREAD_UNCHANGED)
+    handwriting_cv = setBackgroundColor(handwriting_cv)
+    handwriting_pil = PIL.Image.fromarray(cv2.cvtColor(handwriting_cv, cv2.COLOR_BGRA2RGB))
     right_word = request.form.get("word")
     if right_word is None:
         return make_response("Word not found .", 400)
